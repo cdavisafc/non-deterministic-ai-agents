@@ -12,13 +12,19 @@ In short, it's absolutely not hard to build AI agents with Temporal - and as a b
 
 # Running the app
 
-Run the worker:
+In the terminal where you run the agent worker, set an OpenAI API key:
+
+```
+export OPENAI_API_KEY=sk...
+```
+
+Start the agent worker:
 
 ```bash
 uv run python -m worker
 ```
 
-Start the agent:
+Make request to the agent:
 
 ```bash
 uv run python -m start_workflow
