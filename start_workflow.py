@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import uuid
 
 from temporalio.client import Client
 
@@ -19,7 +20,7 @@ async def main():
     result = await client.execute_workflow(
         ChaoticAgentWorkflow.run,
         query,
-        id="my-workflow-id",
+        id=f"my-workflow-id-{uuid.uuid4()}",
         task_queue="chaotic-agent-python-task-queue",
     )
     print(f"Result: {result}")

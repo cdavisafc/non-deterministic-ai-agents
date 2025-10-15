@@ -35,34 +35,15 @@ class ChaoticAgentWorkflow:
             )
 
             # For this simple example, we only have one item in the output list
+            # Either the LLM will have chosen a single function call or it will
+            # have chosen to respond with a message.
             item = result.output[0]
 
+            # Now process the LLM output to either call a tool or respond with a message.
+            
             # if the result is a tool call, call the tool
             if item.type == "function_call":
-
-                # serialize the output, which is an OpenAI object
-                input_list += [
-                    i.model_dump() if hasattr(i, "model_dump") else i
-                    for i in result.output
-                ]
-
-                if item.name == "get_weather_alerts":
-
-                    result = await workflow.execute_activity(
-                        get_weather_alerts.get_weather_alerts,
-                        get_weather_alerts.GetWeatherAlertsRequest(state=json.loads(item.arguments)["state"]),
-                        start_to_close_timeout=timedelta(seconds=30),
-                    )
-
-                elif item.name == "get_random_number":
-                    result = await workflow.execute_activity(
-                        random_stuff.get_random_number,
-                        start_to_close_timeout=timedelta(seconds=30),
-                    )
-
-                # print the tool call result
-                # print(f"Tool call result: {result}")
-                print(f"Made a tool call to {item.name}")
+                result = await self._handle_function_call(item, result, input_list)
                 
                 # add the tool call result to the input list for context
                 input_list.append({"type": "function_call_output",
@@ -82,5 +63,32 @@ class ChaoticAgentWorkflow:
                 if result.output_text.find("STOP:") != -1:
                     return result.output_text.split("STOP:")[1]
                 
+        return result
+
+    async def _handle_function_call(self, item, result, input_list):
+        # serialize the LLM output - the decision the LLM made to call a tool
+        i = result.output[0]
+        input_list += [
+            i.model_dump() if hasattr(i, "model_dump") else i
+        ]
+
+        if item.name == "get_weather_alerts":
+
+            result = await workflow.execute_activity(
+                get_weather_alerts.get_weather_alerts,
+                get_weather_alerts.GetWeatherAlertsRequest(state=json.loads(item.arguments)["state"]),
+                start_to_close_timeout=timedelta(seconds=30),
+            )
+
+        elif item.name == "get_random_number":
+            result = await workflow.execute_activity(
+                random_stuff.get_random_number,
+                start_to_close_timeout=timedelta(seconds=30),
+            )
+
+        # print the tool call result
+        # print(f"Tool call result: {result}")
+        print(f"Made a tool call to {item.name}")
+
         return result
  
